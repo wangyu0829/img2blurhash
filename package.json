@@ -1,0 +1,19 @@
+{
+  "name": "windsurf_demo",
+  "version": "1.0.0",
+  "description": "Node.js 图片 Blurhash API 服务",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "multer": "^1.4.5-lts.1",
+    "axios": "^1.6.7",
+    "sharp": "^0.33.4",
+    "blurhash": "^2.0.5"
+  },
+  "packageManager": "pnpm@9.15.9+sha512.68046141893c66fad01c079231128e9afb89ef87e2691d69e4d40eee228988295fd4682181bae55b58418c3a253bde65a505ec7c5f9403ece5cc3cd37dcf2531"
+}
