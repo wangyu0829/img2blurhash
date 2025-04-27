@@ -1,49 +1,41 @@
+/**
+ * Blurhash 路由
+ */
 const express = require('express');
 const multer = require('multer');
-const axios = require('axios');
 const path = require('path');
 const fs = require('fs');
-const { getBlurhashFromBuffer } = require('../utils/blurhash');
+const blurhashController = require('../controllers/blurhashController');
+const { validateUrl } = require('../middlewares/security');
 
 const router = express.Router();
 
-// 配置 multer
+// 配置文件上传
 const upload = multer({
   dest: path.join(__dirname, '../../uploads'),
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB 限制
-});
-
-// 上传图片接口
-router.post('/upload', upload.single('image'), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: '未检测到上传图片' });
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB 限制
+    files: 1 // 一次只允许上传一个文件
+  },
+  fileFilter: (req, file, cb) => {
+    // 只接受图片文件
+    if (!file.mimetype.startsWith('image/')) {
+      return cb(new Error('只能上传图片文件'), false);
     }
-    const filePath = req.file.path;
-    const buffer = fs.readFileSync(filePath);
-    const blurhash = await getBlurhashFromBuffer(buffer);
-    // 删除临时文件
-    fs.unlinkSync(filePath);
-    res.json({ blurhash });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    cb(null, true);
   }
 });
 
-// 通过 URL 获取图片并生成 blurhash
-router.post('/url', async (req, res) => {
-  try {
-    const { url } = req.body;
-    if (!url) {
-      return res.status(400).json({ error: '缺少 url 参数' });
-    }
-    const response = await axios.get(url, { responseType: 'arraybuffer' });
-    const buffer = Buffer.from(response.data, 'binary');
-    const blurhash = await getBlurhashFromBuffer(buffer);
-    res.json({ blurhash });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+// 上传图片生成blurhash
+router.post('/upload', upload.single('image'), blurhashController.generateFromUpload);
+
+// 通过URL生成blurhash
+router.post('/url', validateUrl, blurhashController.generateFromUrl);
+
+// 批量处理URL
+router.post('/batch', validateUrl, blurhashController.batchProcess);
+
+// 解码blurhash并返回预览图
+router.get('/decode/:blurhash', blurhashController.decodeHash);
 
 module.exports = router;
